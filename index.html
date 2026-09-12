@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Analytics Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        header {
+            background: linear-gradient(135deg, #1e293b, #334155);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #475569;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 1.5rem; font-weight: 600; }
+        header p { color: #94a3b8; font-size: 0.875rem; }
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        select, button {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+        button:hover, select:hover { border-color: #818cf8; }
+        button.active { background: #4f46e5; border-color: #4f46e5; }
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+        }
+        .kpi-card {
+            background: linear-gradient(135deg, #1e293b, #1e293b);
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+        .kpi-card:hover { border-color: #818cf8; }
+        .kpi-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
+        .kpi-value { font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0; }
+        .kpi-change { font-size: 0.8rem; }
+        .kpi-change.up { color: #34d399; }
+        .kpi-change.down { color: #f87171; }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 0 2rem 1.5rem;
+        }
+        .chart-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+        .chart-card.full-width { grid-column: 1 / -1; }
+        .chart-card h3 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .kpi-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>Sales Analytics Dashboard</h1>
+        <p>Acme Corp -- FY 2024-2025</p>
+    </div>
+    <div class="filters">
+        <select id="regionFilter">
+            <option value="all">All Regions</option>
+            <option value="North America">North America</option>
+            <option value="Europe">Europe</option>
+            <option value="Asia Pacific">Asia Pacific</option>
+            <option value="Latin America">Latin America</option>
+        </select>
+        <button id="btnMonthly" class="active" onclick="setTimeframe('monthly')">Monthly</button>
+        <button id="btnQuarterly" onclick="setTimeframe('quarterly')">Quarterly</button>
+    </div>
+</header>
+
+<div class="kpi-row" id="kpiRow"></div>
+
+<div class="charts-grid">
+    <div class="chart-card full-width"><h3>Revenue Over Time</h3><div id="revenueChart"></div></div>
+    <div class="chart-card"><h3>Revenue by Region</h3><div id="regionChart"></div></div>
+    <div class="chart-card"><h3>Product Mix</h3><div id="productChart"></div></div>
+    <div class="chart-card"><h3>Monthly Growth Rate (%)</h3><div id="growthChart"></div></div>
+    <div class="chart-card"><h3>Top Sales Reps</h3><div id="repsChart"></div></div>
+</div>
+
+<script>
+// --- FAKE DATA ---
+const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const regions = ['North America','Europe','Asia Pacific','Latin America'];
+const products = ['SaaS Platform','Consulting','Hardware','Support','Training'];
+
+function seed(s) { return function() { s = Math.sin(s) * 10000; return s - Math.floor(s); }; }
+const rng = seed(42);
+
+const data = [];
+regions.forEach(region => {
+    const base = region === 'North America' ? 120 : region === 'Europe' ? 90 : region === 'Asia Pacific' ? 70 : 40;
+    months.forEach((m, i) => {
+        products.forEach(product => {
+            const seasonal = 1 + 0.15 * Math.sin((i - 2) * Math.PI / 6);
+            const revenue = Math.round(base * seasonal * (0.8 + rng() * 0.5) * (product === 'SaaS Platform' ? 2.5 : product === 'Consulting' ? 1.8 : product === 'Hardware' ? 1.2 : product === 'Support' ? 0.8 : 0.5));
+            const deals = Math.round(revenue / (15 + rng() * 20));
+            data.push({ month: m, monthIdx: i, region, product, revenue, deals });
+        });
+    });
+});
+
+const reps = ['Sarah Chen','Marcus Johnson','Priya Patel','James O\'Brien','Aiko Tanaka','Lars Mueller','Sofia Garcia','David Kim'];
+const repData = reps.map(name => ({
+    name,
+    closed: Math.round(300 + rng() * 700),
+    quota: Math.round(600 + rng() * 300)
+}));
+
+let currentRegion = 'all';
+let currentTimeframe = 'monthly';
+
+const plotLayout = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    font: { color: '#94a3b8', size: 11 },
+    margin: { l: 50, r: 20, t: 10, b: 40 },
+    xaxis: { gridcolor: '#334155', zerolinecolor: '#334155' },
+    yaxis: { gridcolor: '#334155', zerolinecolor: '#334155' },
+    legend: { orientation: 'h', y: -0.2 },
+    colorway: ['#818cf8','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#e879f9']
+};
+const plotConfig = { responsive: true, displayModeBar: false };
+
+function filterData() {
+    return currentRegion === 'all' ? data : data.filter(d => d.region === currentRegion);
+}
+
+function updateKPIs() {
+    const fd = filterData();
+    const totalRev = fd.reduce((s, d) => s + d.revenue, 0);
+    const totalDeals = fd.reduce((s, d) => s + d.deals, 0);
+    const h1 = fd.filter(d => d.monthIdx < 6);
+    const h2 = fd.filter(d => d.monthIdx >= 6);
+    const h1Rev = h1.reduce((s, d) => s + d.revenue, 0);
+    const h2Rev = h2.reduce((s, d) => s + d.revenue, 0);
+    const growth = ((h2Rev - h1Rev) / h1Rev * 100).toFixed(1);
+    const avgDeal = (totalRev / totalDeals).toFixed(0);
+    const topProduct = products.map(p => ({ p, r: fd.filter(d => d.product === p).reduce((s, d) => s + d.revenue, 0) })).sort((a, b) => b.r - a.r)[0];
+
+    const kpis = [
+        { label: 'Total Revenue', value: `$${(totalRev / 1000).toFixed(0)}K`, change: `${growth > 0 ? '+' : ''}${growth}% H2 vs H1`, up: growth > 0 },
+        { label: 'Total Deals', value: totalDeals.toLocaleString(), change: `Avg $${avgDeal}/deal`, up: true },
+        { label: 'Top Product', value: topProduct.p, change: `$${(topProduct.r / 1000).toFixed(0)}K revenue`, up: true },
+        { label: 'Regions Active', value: currentRegion === 'all' ? regions.length : 1, change: currentRegion === 'all' ? 'Global view' : currentRegion, up: true },
+    ];
+
+    document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+        <div class="kpi-card">
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-change ${k.up ? 'up' : 'down'}">${k.change}</div>
+        </div>
+    `).join('');
+}
+
+function updateRevenueChart() {
+    const fd = filterData();
+    if (currentTimeframe === 'monthly') {
+        const traces = (currentRegion === 'all' ? regions : [currentRegion]).map(region => {
+            const regionData = fd.filter(d => d.region === region);
+            const monthly = months.map((m, i) => regionData.filter(d => d.monthIdx === i).reduce((s, d) => s + d.revenue, 0));
+            return { x: months, y: monthly, name: region, type: 'scatter', mode: 'lines+markers', line: { width: 2.5 } };
+        });
+        Plotly.react('revenueChart', traces, { ...plotLayout, height: 300 }, plotConfig);
+    } else {
+        const quarters = ['Q1','Q2','Q3','Q4'];
+        const traces = (currentRegion === 'all' ? regions : [currentRegion]).map(region => {
+            const regionData = fd.filter(d => d.region === region);
+            const qRevs = quarters.map((_, qi) => regionData.filter(d => Math.floor(d.monthIdx / 3) === qi).reduce((s, d) => s + d.revenue, 0));
+            return { x: quarters, y: qRevs, name: region, type: 'bar' };
+        });
+        Plotly.react('revenueChart', traces, { ...plotLayout, height: 300, barmode: 'group' }, plotConfig);
+    }
+}
+
+function updateRegionChart() {
+    const fd = filterData();
+    const values = regions.map(r => fd.filter(d => d.region === r).reduce((s, d) => s + d.revenue, 0));
+    Plotly.react('regionChart', [{
+        labels: regions, values, type: 'pie', hole: 0.45,
+        textinfo: 'label+percent', textfont: { color: '#e2e8f0' },
+        marker: { colors: ['#818cf8','#34d399','#f59e0b','#f87171'] }
+    }], { ...plotLayout, height: 300, showlegend: false }, plotConfig);
+}
+
+function updateProductChart() {
+    const fd = filterData();
+    const values = products.map(p => fd.filter(d => d.product === p).reduce((s, d) => s + d.revenue, 0));
+    Plotly.react('productChart', [{
+        x: products, y: values, type: 'bar',
+        marker: { color: ['#818cf8','#34d399','#f59e0b','#f87171','#a78bfa'], borderRadius: 4 }
+    }], { ...plotLayout, height: 300 }, plotConfig);
+}
+
+function updateGrowthChart() {
+    const fd = filterData();
+    const monthly = months.map((m, i) => fd.filter(d => d.monthIdx === i).reduce((s, d) => s + d.revenue, 0));
+    const growth = monthly.map((v, i) => i === 0 ? 0 : ((v - monthly[i - 1]) / monthly[i - 1] * 100));
+    const colors = growth.map(g => g >= 0 ? '#34d399' : '#f87171');
+    Plotly.react('growthChart', [{
+        x: months, y: growth.map(g => +g.toFixed(1)), type: 'bar',
+        marker: { color: colors }
+    }], { ...plotLayout, height: 300 }, plotConfig);
+}
+
+function updateRepsChart() {
+    const sorted = [...repData].sort((a, b) => a.closed - b.closed);
+    Plotly.react('repsChart', [
+        { y: sorted.map(r => r.name), x: sorted.map(r => r.quota), name: 'Quota', type: 'bar', orientation: 'h', marker: { color: '#334155' } },
+        { y: sorted.map(r => r.name), x: sorted.map(r => r.closed), name: 'Closed', type: 'bar', orientation: 'h', marker: { color: sorted.map(r => r.closed >= r.quota ? '#34d399' : '#f59e0b') } }
+    ], { ...plotLayout, height: 300, barmode: 'overlay', xaxis: { ...plotLayout.xaxis, title: 'Revenue ($K)' } }, plotConfig);
+}
+
+function updateAll() {
+    updateKPIs();
+    updateRevenueChart();
+    updateRegionChart();
+    updateProductChart();
+    updateGrowthChart();
+    updateRepsChart();
+}
+
+document.getElementById('regionFilter').addEventListener('change', e => {
+    currentRegion = e.target.value;
+    updateAll();
+});
+
+function setTimeframe(tf) {
+    currentTimeframe = tf;
+    document.getElementById('btnMonthly').classList.toggle('active', tf === 'monthly');
+    document.getElementById('btnQuarterly').classList.toggle('active', tf === 'quarterly');
+    updateAll();
+}
+
+updateAll();
+</script>
+</body>
+</html>
