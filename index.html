@@ -1,269 +1,877 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Analytics Dashboard</title>
+    <title>El Futuro de las Redes Familiares en Guatemala</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --gt-blue: #4997D0;
+            --gt-blue-dark: #2B6CA3;
+            --gt-blue-light: #7BB8E0;
+            --accent: #E8A838;
+            --accent-warm: #D94F30;
+            --bg-dark: #0B1426;
+            --bg-card: #111D35;
+            --bg-card-hover: #162545;
+            --border: #1E3050;
+            --text-primary: #E8EDF5;
+            --text-secondary: #8DA2BE;
+            --text-muted: #5A7192;
+            --green: #2DD4A0;
+            --red: #F06060;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #0f172a;
-            color: #e2e8f0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
             min-height: 100vh;
+            line-height: 1.5;
         }
-        header {
-            background: linear-gradient(135deg, #1e293b, #334155);
-            padding: 1.5rem 2rem;
-            border-bottom: 1px solid #475569;
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #0D1B30 0%, #162B4D 50%, #1A3358 100%);
+            border-bottom: 2px solid var(--gt-blue);
+            padding: 2.5rem 2rem 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(73,151,208,0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(73,151,208,0.15);
+            color: var(--gt-blue-light);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            padding: 0.35rem 0.85rem;
+            border-radius: 2rem;
+            border: 1px solid rgba(73,151,208,0.25);
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #fff 0%, var(--gt-blue-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            max-width: 720px;
+            margin-bottom: 1.5rem;
+            font-weight: 300;
+        }
+        .hero-stat-row {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
         }
-        header h1 { font-size: 1.5rem; font-weight: 600; }
-        header p { color: #94a3b8; font-size: 0.875rem; }
-        .filters {
+        .hero-stat {
             display: flex;
-            gap: 0.75rem;
-            align-items: center;
+            flex-direction: column;
         }
-        select, button {
-            background: #1e293b;
-            color: #e2e8f0;
-            border: 1px solid #475569;
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            cursor: pointer;
+        .hero-stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--accent);
         }
-        button:hover, select:hover { border-color: #818cf8; }
-        button.active { background: #4f46e5; border-color: #4f46e5; }
-        .kpi-row {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        .hero-stat-value.decline { color: var(--accent-warm); }
+        .hero-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Controls */
+        .controls-bar {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .controls-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
             gap: 1rem;
-            padding: 1.5rem 2rem;
+            align-items: center;
+            flex-wrap: wrap;
         }
-        .kpi-card {
-            background: linear-gradient(135deg, #1e293b, #1e293b);
-            border: 1px solid #334155;
-            border-radius: 0.75rem;
-            padding: 1.25rem;
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .control-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        select {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
             transition: border-color 0.2s;
         }
-        .kpi-card:hover { border-color: #818cf8; }
-        .kpi-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
-        .kpi-value { font-size: 1.75rem; font-weight: 700; margin: 0.25rem 0; }
-        .kpi-change { font-size: 0.8rem; }
-        .kpi-change.up { color: #34d399; }
-        .kpi-change.down { color: #f87171; }
+        select:hover { border-color: var(--gt-blue); }
+        select:focus { outline: none; border-color: var(--gt-blue); box-shadow: 0 0 0 2px rgba(73,151,208,0.2); }
+        .country-toggles {
+            display: flex;
+            gap: 0.35rem;
+            flex-wrap: wrap;
+        }
+        .country-toggle {
+            padding: 0.4rem 0.75rem;
+            border-radius: 0.4rem;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s;
+        }
+        .country-toggle:hover { border-color: var(--gt-blue); }
+        .country-toggle.active { background: var(--gt-blue); color: #fff; border-color: var(--gt-blue); }
+        .country-toggle.active.gtm { background: var(--gt-blue); border-color: var(--gt-blue); }
+        .country-toggle.active.mex { background: #6366f1; border-color: #6366f1; }
+        .country-toggle.active.slv { background: #f59e0b; border-color: #f59e0b; }
+        .country-toggle.active.cri { background: #10b981; border-color: #10b981; }
+
+        /* Main content */
+        .main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem 3rem;
+        }
+        .section-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin: 2rem 0 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .section-title .num {
+            background: var(--gt-blue);
+            color: #fff;
+            font-size: 0.7rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+        .section-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            max-width: 800px;
+        }
+
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        .kpi {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .kpi:hover { border-color: var(--gt-blue-dark); transform: translateY(-1px); }
+        .kpi-label {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .kpi-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            line-height: 1.1;
+        }
+        .kpi-sub {
+            font-size: 0.75rem;
+            margin-top: 0.3rem;
+            font-weight: 500;
+        }
+        .kpi-sub.down { color: var(--red); }
+        .kpi-sub.up { color: var(--green); }
+        .kpi-sub.neutral { color: var(--text-secondary); }
+
+        /* Charts */
         .charts-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
-            padding: 0 2rem 1.5rem;
         }
         .chart-card {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
             border-radius: 0.75rem;
-            padding: 1rem;
+            padding: 1.25rem;
+            transition: border-color 0.2s;
         }
-        .chart-card.full-width { grid-column: 1 / -1; }
-        .chart-card h3 { font-size: 0.9rem; margin-bottom: 0.5rem; color: #cbd5e1; }
+        .chart-card:hover { border-color: var(--gt-blue-dark); }
+        .chart-card.full { grid-column: 1 / -1; }
+        .chart-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+        .chart-subtitle {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Insight callout */
+        .insight {
+            background: linear-gradient(135deg, rgba(73,151,208,0.08), rgba(73,151,208,0.03));
+            border: 1px solid rgba(73,151,208,0.2);
+            border-left: 3px solid var(--gt-blue);
+            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        .insight strong { color: var(--text-primary); }
+
+        /* Footer */
+        footer {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .footer-left { max-width: 600px; }
+        .footer-left h4 { font-size: 0.85rem; margin-bottom: 0.35rem; }
+        .footer-left p { font-size: 0.75rem; color: var(--text-muted); line-height: 1.6; }
+        .footer-right { text-align: right; }
+        .footer-right .name { font-weight: 700; font-size: 0.95rem; }
+        .footer-right .affil { font-size: 0.75rem; color: var(--text-muted); }
+        .footer-right a { color: var(--gt-blue-light); text-decoration: none; font-size: 0.75rem; }
+
         @media (max-width: 768px) {
             .charts-grid { grid-template-columns: 1fr; }
-            .kpi-row { grid-template-columns: 1fr 1fr; }
+            .hero h1 { font-size: 1.5rem; }
+            .hero-stat-row { gap: 1rem; }
+            .controls-inner { flex-direction: column; align-items: flex-start; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <div>
-        <h1>Sales Analytics Dashboard</h1>
-        <p>Acme Corp -- FY 2024-2025</p>
+<div class="hero">
+    <div class="hero-inner">
+        <div class="hero-badge">Proyecciones de Parentesco 1950 &ndash; 2100</div>
+        <h1>El Futuro de las Redes Familiares en Guatemala</h1>
+        <p class="hero-subtitle">
+            Las familias guatemaltecas se reducen. Las proyecciones muestran una disminuci&oacute;n
+            significativa en el n&uacute;mero de parientes vivos, con profundas implicaciones para el
+            cuidado informal y la pol&iacute;tica social.
+        </p>
+        <div class="hero-stat-row" id="heroStats"></div>
     </div>
-    <div class="filters">
-        <select id="regionFilter">
-            <option value="all">All Regions</option>
-            <option value="North America">North America</option>
-            <option value="Europe">Europe</option>
-            <option value="Asia Pacific">Asia Pacific</option>
-            <option value="Latin America">Latin America</option>
-        </select>
-        <button id="btnMonthly" class="active" onclick="setTimeframe('monthly')">Monthly</button>
-        <button id="btnQuarterly" onclick="setTimeframe('quarterly')">Quarterly</button>
-    </div>
-</header>
-
-<div class="kpi-row" id="kpiRow"></div>
-
-<div class="charts-grid">
-    <div class="chart-card full-width"><h3>Revenue Over Time</h3><div id="revenueChart"></div></div>
-    <div class="chart-card"><h3>Revenue by Region</h3><div id="regionChart"></div></div>
-    <div class="chart-card"><h3>Product Mix</h3><div id="productChart"></div></div>
-    <div class="chart-card"><h3>Monthly Growth Rate (%)</h3><div id="growthChart"></div></div>
-    <div class="chart-card"><h3>Top Sales Reps</h3><div id="repsChart"></div></div>
 </div>
 
+<div class="controls-bar">
+    <div class="controls-inner">
+        <div class="control-group">
+            <span class="control-label">Edad de referencia</span>
+            <select id="focalAge">
+                <option value="0-4">0-4</option>
+                <option value="5-9">5-9</option>
+                <option value="10-14">10-14</option>
+                <option value="15-19">15-19</option>
+                <option value="20-24">20-24</option>
+                <option value="25-29">25-29</option>
+                <option value="30-34">30-34</option>
+                <option value="35-39" selected>35-39</option>
+                <option value="40-44">40-44</option>
+                <option value="45-49">45-49</option>
+                <option value="50-54">50-54</option>
+                <option value="55-59">55-59</option>
+                <option value="60-64">60-64</option>
+                <option value="65-69">65-69</option>
+                <option value="70-74">70-74</option>
+                <option value="75-79">75-79</option>
+                <option value="80-84">80-84</option>
+                <option value="85-89">85-89</option>
+                <option value="90-94">90-94</option>
+                <option value="95-99">95-99</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <span class="control-label">Pa&iacute;ses</span>
+            <div class="country-toggles">
+                <button class="country-toggle active gtm" data-code="GTM">Guatemala</button>
+                <button class="country-toggle active mex" data-code="MEX">M&eacute;xico</button>
+                <button class="country-toggle active slv" data-code="SLV">El Salvador</button>
+                <button class="country-toggle active cri" data-code="CRI">Costa Rica</button>
+            </div>
+        </div>
+        <div class="control-group">
+            <span class="control-label">Per&iacute;odo</span>
+            <select id="yearSelect"></select>
+        </div>
+    </div>
+</div>
+
+<div class="main">
+
+    <div class="section-title"><span class="num">1</span> Panorama General</div>
+    <div class="section-desc">
+        N&uacute;mero esperado de parientes biol&oacute;gicos vivos para una mujer guatemalteca en la edad seleccionada.
+    </div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="charts-grid">
+        <div class="chart-card full">
+            <div class="chart-title">Total de Parientes Vivos a lo Largo del Tiempo</div>
+            <div class="chart-subtitle">Suma de todos los tipos de parientes para la edad de referencia seleccionada, 1950&ndash;2100</div>
+            <div id="chartTimeline"></div>
+        </div>
+    </div>
+
+    <div class="insight" id="insightTimeline"></div>
+
+    <div class="section-title"><span class="num">2</span> Composici&oacute;n de la Red Familiar</div>
+    <div class="section-desc">
+        Desglose por tipo de pariente para el per&iacute;odo seleccionado. La transici&oacute;n demogr&aacute;fica transforma la estructura familiar.
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title">Composici&oacute;n por Tipo de Pariente</div>
+            <div class="chart-subtitle" id="compSubtitle"></div>
+            <div id="chartComposition"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Cambio en Composici&oacute;n: 1950 vs Proyecci&oacute;n 2095</div>
+            <div class="chart-subtitle">Guatemala &mdash; parientes esperados por tipo</div>
+            <div id="chartChange"></div>
+        </div>
+    </div>
+
+    <div class="section-title"><span class="num">3</span> Perfil por Edad de Referencia</div>
+    <div class="section-desc">
+        &iquest;C&oacute;mo var&iacute;a el n&uacute;mero de parientes seg&uacute;n la edad de la persona? Comparaci&oacute;n entre pa&iacute;ses.
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card full">
+            <div class="chart-title">Total de Parientes por Edad de Referencia</div>
+            <div class="chart-subtitle" id="profileSubtitle"></div>
+            <div id="chartProfile"></div>
+        </div>
+    </div>
+
+    <div class="section-title"><span class="num">4</span> Tendencias por Tipo de Pariente</div>
+    <div class="section-desc">
+        Evoluci&oacute;n temporal de cada tipo de pariente. Se observa el aumento de abuelas y la ca&iacute;da de primas y sobrinas.
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <div class="chart-title">Generaciones Ascendentes</div>
+            <div class="chart-subtitle">Madres, abuelas y bisabuelas vivas</div>
+            <div id="chartAscending"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Generaciones Descendentes</div>
+            <div class="chart-subtitle">Hijas, nietas y bisnietas vivas</div>
+            <div id="chartDescending"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Generaci&oacute;n Colateral: Hermanas</div>
+            <div class="chart-subtitle">Hermanas vivas esperadas</div>
+            <div id="chartSisters"></div>
+        </div>
+        <div class="chart-card">
+            <div class="chart-title">Generaci&oacute;n Colateral: Primas, T&iacute;as, Sobrinas</div>
+            <div class="chart-subtitle">Red extendida colateral</div>
+            <div id="chartExtended"></div>
+        </div>
+    </div>
+
+    <div class="insight" id="insightPolicy"></div>
+
+</div>
+
+<footer>
+    <div class="footer-left">
+        <h4>Fuente de datos y metodolog&iacute;a</h4>
+        <p>
+            Basado en Alburez-Gutierrez, Williams &amp; Caswell (2023).
+            &ldquo;Projections of human kinship for all countries.&rdquo;
+            <em>Proceedings of the National Academy of Sciences</em>, 120(52), e2315722120.<br>
+            Datos demogr&aacute;ficos: Naciones Unidas, World Population Prospects 2022.
+            Modelo matem&aacute;tico de parentesco basado en el marco matricial de Caswell (2019),
+            implementado en el paquete de R <strong>DemoKin</strong>.
+        </p>
+    </div>
+    <div class="footer-right">
+        <div class="name">Diego Alburez-Gutierrez</div>
+        <div class="affil">Max Planck Institute for Demographic Research</div>
+        <a href="https://github.com/alburezg">github.com/alburezg</a><br>
+        <a href="mailto:alburez@demogr.mpg.de">alburez@demogr.mpg.de</a>
+    </div>
+</footer>
+
 <script>
-// --- FAKE DATA ---
-const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const regions = ['North America','Europe','Asia Pacific','Latin America'];
-const products = ['SaaS Platform','Consulting','Hardware','Support','Training'];
-
-function seed(s) { return function() { s = Math.sin(s) * 10000; return s - Math.floor(s); }; }
-const rng = seed(42);
-
-const data = [];
-regions.forEach(region => {
-    const base = region === 'North America' ? 120 : region === 'Europe' ? 90 : region === 'Asia Pacific' ? 70 : 40;
-    months.forEach((m, i) => {
-        products.forEach(product => {
-            const seasonal = 1 + 0.15 * Math.sin((i - 2) * Math.PI / 6);
-            const revenue = Math.round(base * seasonal * (0.8 + rng() * 0.5) * (product === 'SaaS Platform' ? 2.5 : product === 'Consulting' ? 1.8 : product === 'Hardware' ? 1.2 : product === 'Support' ? 0.8 : 0.5));
-            const deals = Math.round(revenue / (15 + rng() * 20));
-            data.push({ month: m, monthIdx: i, region, product, revenue, deals });
-        });
-    });
-});
-
-const reps = ['Sarah Chen','Marcus Johnson','Priya Patel','James O\'Brien','Aiko Tanaka','Lars Mueller','Sofia Garcia','David Kim'];
-const repData = reps.map(name => ({
-    name,
-    closed: Math.round(300 + rng() * 700),
-    quota: Math.round(600 + rng() * 300)
-}));
-
-let currentRegion = 'all';
-let currentTimeframe = 'monthly';
-
-const plotLayout = {
-    paper_bgcolor: 'rgba(0,0,0,0)',
-    plot_bgcolor: 'rgba(0,0,0,0)',
-    font: { color: '#94a3b8', size: 11 },
-    margin: { l: 50, r: 20, t: 10, b: 40 },
-    xaxis: { gridcolor: '#334155', zerolinecolor: '#334155' },
-    yaxis: { gridcolor: '#334155', zerolinecolor: '#334155' },
-    legend: { orientation: 'h', y: -0.2 },
-    colorway: ['#818cf8','#34d399','#f59e0b','#f87171','#a78bfa','#38bdf8','#fb923c','#e879f9']
+// ─── Data & Config ──────────────────────────────────────────
+let DB;
+const COLORS = {
+    GTM: '#4997D0', MEX: '#818cf8', SLV: '#f59e0b', CRI: '#10b981'
 };
+const COUNTRY_NAMES = {
+    GTM: 'Guatemala', MEX: 'Mexico', SLV: 'El Salvador', CRI: 'Costa Rica'
+};
+const KIN_LABELS = {
+    d: 'Hijas', gd: 'Nietas', ggd: 'Bisnietas',
+    m: 'Madres', gm: 'Abuelas', ggm: 'Bisabuelas',
+    s: 'Hermanas', a: 'Tias', n: 'Sobrinas', c: 'Primas'
+};
+const KIN_COLORS = {
+    d: '#4997D0', gd: '#7BB8E0', ggd: '#A8D4F0',
+    m: '#D94F30', gm: '#E8A838', ggm: '#F5D060',
+    s: '#10b981', a: '#818cf8', n: '#f472b6', c: '#a78bfa'
+};
+
+let activeCountries = new Set(['GTM','MEX','SLV','CRI']);
 const plotConfig = { responsive: true, displayModeBar: false };
 
-function filterData() {
-    return currentRegion === 'all' ? data : data.filter(d => d.region === currentRegion);
+function baseLayout(height = 320) {
+    return {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#8DA2BE', size: 11, family: 'Inter' },
+        margin: { l: 50, r: 20, t: 10, b: 45 },
+        xaxis: { gridcolor: '#1E3050', zerolinecolor: '#1E3050', tickfont: { size: 10 } },
+        yaxis: { gridcolor: '#1E3050', zerolinecolor: '#1E3050', tickfont: { size: 10 } },
+        legend: { orientation: 'h', y: -0.22, font: { size: 10 } },
+        height,
+        hovermode: 'x unified'
+    };
+}
+
+// ─── Helpers ────────────────────────────────────────────────
+function getTotalKin(country, year, focalAge) {
+    const d = DB.data[country]?.[year]?.[focalAge];
+    if (!d) return 0;
+    return Object.values(d).reduce((s, v) => s + v, 0);
+}
+
+function getKinByType(country, year, focalAge) {
+    return DB.data[country]?.[year]?.[focalAge] || {};
+}
+
+function getYears() { return DB.years; }
+function getEstimateYears() { return DB.years.filter(y => parseInt(y) <= 2020); }
+function getProjectionYears() { return DB.years.filter(y => parseInt(y) > 2020); }
+
+function yearMid(y) { return parseInt(y.split('-')[0]) + 2; }
+
+// ─── Update Functions ───────────────────────────────────────
+function updateHeroStats() {
+    const fa = document.getElementById('focalAge').value;
+    const now = getTotalKin('GTM', '2020-2025', fa);
+    const past = getTotalKin('GTM', '1950-1955', fa);
+    const future = getTotalKin('GTM', '2095-2100', fa);
+    const decline = now > 0 ? ((future - now) / now * 100).toFixed(0) : 0;
+
+    document.getElementById('heroStats').innerHTML = `
+        <div class="hero-stat">
+            <div class="hero-stat-value">${past.toFixed(1)}</div>
+            <div class="hero-stat-label">Parientes vivos, 1950</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value">${now.toFixed(1)}</div>
+            <div class="hero-stat-label">Parientes vivos, 2020</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value decline">${future.toFixed(1)}</div>
+            <div class="hero-stat-label">Proyecci&oacute;n 2095</div>
+        </div>
+        <div class="hero-stat">
+            <div class="hero-stat-value decline">${decline}%</div>
+            <div class="hero-stat-label">Cambio proyectado</div>
+        </div>
+    `;
 }
 
 function updateKPIs() {
-    const fd = filterData();
-    const totalRev = fd.reduce((s, d) => s + d.revenue, 0);
-    const totalDeals = fd.reduce((s, d) => s + d.deals, 0);
-    const h1 = fd.filter(d => d.monthIdx < 6);
-    const h2 = fd.filter(d => d.monthIdx >= 6);
-    const h1Rev = h1.reduce((s, d) => s + d.revenue, 0);
-    const h2Rev = h2.reduce((s, d) => s + d.revenue, 0);
-    const growth = ((h2Rev - h1Rev) / h1Rev * 100).toFixed(1);
-    const avgDeal = (totalRev / totalDeals).toFixed(0);
-    const topProduct = products.map(p => ({ p, r: fd.filter(d => d.product === p).reduce((s, d) => s + d.revenue, 0) })).sort((a, b) => b.r - a.r)[0];
+    const fa = document.getElementById('focalAge').value;
+    const yr = document.getElementById('yearSelect').value;
+    const kin = getKinByType('GTM', yr, fa);
+    const total = Object.values(kin).reduce((s,v) => s + v, 0);
 
-    const kpis = [
-        { label: 'Total Revenue', value: `$${(totalRev / 1000).toFixed(0)}K`, change: `${growth > 0 ? '+' : ''}${growth}% H2 vs H1`, up: growth > 0 },
-        { label: 'Total Deals', value: totalDeals.toLocaleString(), change: `Avg $${avgDeal}/deal`, up: true },
-        { label: 'Top Product', value: topProduct.p, change: `$${(topProduct.r / 1000).toFixed(0)}K revenue`, up: true },
-        { label: 'Regions Active', value: currentRegion === 'all' ? regions.length : 1, change: currentRegion === 'all' ? 'Global view' : currentRegion, up: true },
-    ];
+    // Compare to first available year
+    const kinPast = getKinByType('GTM', '1950-1955', fa);
+    const totalPast = Object.values(kinPast).reduce((s,v) => s + v, 0);
+    const pctChange = totalPast > 0 ? ((total - totalPast) / totalPast * 100).toFixed(1) : 0;
+    const changeDir = pctChange >= 0 ? 'up' : 'down';
+    const changeSign = pctChange >= 0 ? '+' : '';
 
-    document.getElementById('kpiRow').innerHTML = kpis.map(k => `
-        <div class="kpi-card">
-            <div class="kpi-label">${k.label}</div>
-            <div class="kpi-value">${k.value}</div>
-            <div class="kpi-change ${k.up ? 'up' : 'down'}">${k.change}</div>
+    const ascending = (kin.m || 0) + (kin.gm || 0) + (kin.ggm || 0);
+    const descending = (kin.d || 0) + (kin.gd || 0) + (kin.ggd || 0);
+    const lateral = (kin.s || 0) + (kin.a || 0) + (kin.n || 0) + (kin.c || 0);
+
+    document.getElementById('kpiGrid').innerHTML = `
+        <div class="kpi">
+            <div class="kpi-label">Total parientes vivos</div>
+            <div class="kpi-val">${total.toFixed(1)}</div>
+            <div class="kpi-sub ${changeDir}">${changeSign}${pctChange}% vs 1950</div>
         </div>
-    `).join('');
+        <div class="kpi">
+            <div class="kpi-label">Ascendentes</div>
+            <div class="kpi-val">${ascending.toFixed(1)}</div>
+            <div class="kpi-sub neutral">Madres + abuelas + bisabuelas</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Descendentes</div>
+            <div class="kpi-val">${descending.toFixed(1)}</div>
+            <div class="kpi-sub neutral">Hijas + nietas + bisnietas</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Colaterales</div>
+            <div class="kpi-val">${lateral.toFixed(1)}</div>
+            <div class="kpi-sub neutral">Hermanas, t&iacute;as, sobrinas, primas</div>
+        </div>
+    `;
 }
 
-function updateRevenueChart() {
-    const fd = filterData();
-    if (currentTimeframe === 'monthly') {
-        const traces = (currentRegion === 'all' ? regions : [currentRegion]).map(region => {
-            const regionData = fd.filter(d => d.region === region);
-            const monthly = months.map((m, i) => regionData.filter(d => d.monthIdx === i).reduce((s, d) => s + d.revenue, 0));
-            return { x: months, y: monthly, name: region, type: 'scatter', mode: 'lines+markers', line: { width: 2.5 } };
+function updateTimeline() {
+    const fa = document.getElementById('focalAge').value;
+    const years = getYears();
+    const traces = [];
+
+    for (const code of activeCountries) {
+        const x = years.map(yearMid);
+        const y = years.map(yr => getTotalKin(code, yr, fa));
+        const estEnd = years.findIndex(yr => parseInt(yr) > 2020);
+
+        // Estimate line
+        traces.push({
+            x: x.slice(0, estEnd + 1), y: y.slice(0, estEnd + 1),
+            name: COUNTRY_NAMES[code],
+            line: { color: COLORS[code], width: 2.5 },
+            mode: 'lines', legendgroup: code, showlegend: true
         });
-        Plotly.react('revenueChart', traces, { ...plotLayout, height: 300 }, plotConfig);
-    } else {
-        const quarters = ['Q1','Q2','Q3','Q4'];
-        const traces = (currentRegion === 'all' ? regions : [currentRegion]).map(region => {
-            const regionData = fd.filter(d => d.region === region);
-            const qRevs = quarters.map((_, qi) => regionData.filter(d => Math.floor(d.monthIdx / 3) === qi).reduce((s, d) => s + d.revenue, 0));
-            return { x: quarters, y: qRevs, name: region, type: 'bar' };
+        // Projection line (dashed)
+        traces.push({
+            x: x.slice(estEnd), y: y.slice(estEnd),
+            name: COUNTRY_NAMES[code] + ' (proy.)',
+            line: { color: COLORS[code], width: 2, dash: 'dot' },
+            mode: 'lines', legendgroup: code, showlegend: false
         });
-        Plotly.react('revenueChart', traces, { ...plotLayout, height: 300, barmode: 'group' }, plotConfig);
     }
+
+    const layout = {
+        ...baseLayout(340),
+        shapes: [{
+            type: 'line', x0: 2022, x1: 2022, y0: 0, y1: 1, yref: 'paper',
+            line: { color: '#5A7192', width: 1, dash: 'dash' }
+        }],
+        annotations: [{
+            x: 2025, y: 1, yref: 'paper', text: 'Proyecciones',
+            showarrow: false, font: { color: '#5A7192', size: 10 }, xanchor: 'left'
+        }],
+        yaxis: { ...baseLayout().yaxis, title: { text: 'Parientes vivos esperados', font: { size: 11 } } }
+    };
+
+    Plotly.react('chartTimeline', traces, layout, plotConfig);
+
+    // Insight
+    const gtNow = getTotalKin('GTM', '2020-2025', fa);
+    const gtFut = getTotalKin('GTM', '2095-2100', fa);
+    const gtPast = getTotalKin('GTM', '1950-1955', fa);
+    const peak = years.reduce((best, yr) => {
+        const v = getTotalKin('GTM', yr, fa);
+        return v > best.v ? {yr, v} : best;
+    }, {yr: '', v: 0});
+
+    document.getElementById('insightTimeline').innerHTML = `
+        <strong>Hallazgo clave:</strong> Una mujer guatemalteca de ${fa} a&ntilde;os pod&iacute;a esperar
+        <strong>${gtPast.toFixed(1)}</strong> parientes vivos en 1950. El m&aacute;ximo se alcanz&oacute; en
+        <strong>${peak.yr}</strong> con <strong>${peak.v.toFixed(1)}</strong> parientes.
+        Para 2095, se proyectan solo <strong>${gtFut.toFixed(1)}</strong> &mdash; una reducci&oacute;n del
+        <strong>${((1 - gtFut/peak.v) * 100).toFixed(0)}%</strong> desde el pico.
+        Menos parientes significa menos opciones de cuidado informal y mayor presi&oacute;n sobre los sistemas institucionales.
+    `;
 }
 
-function updateRegionChart() {
-    const fd = filterData();
-    const values = regions.map(r => fd.filter(d => d.region === r).reduce((s, d) => s + d.revenue, 0));
-    Plotly.react('regionChart', [{
-        labels: regions, values, type: 'pie', hole: 0.45,
-        textinfo: 'label+percent', textfont: { color: '#e2e8f0' },
-        marker: { colors: ['#818cf8','#34d399','#f59e0b','#f87171'] }
-    }], { ...plotLayout, height: 300, showlegend: false }, plotConfig);
+function updateComposition() {
+    const fa = document.getElementById('focalAge').value;
+    const yr = document.getElementById('yearSelect').value;
+    document.getElementById('compSubtitle').textContent = `Periodo: ${yr}, Edad: ${fa}`;
+
+    const traces = [];
+    const kinTypes = ['d','gd','ggd','m','gm','ggm','s','a','n','c'];
+
+    for (const code of activeCountries) {
+        const kin = getKinByType(code, yr, fa);
+        traces.push({
+            x: kinTypes.map(k => KIN_LABELS[k]),
+            y: kinTypes.map(k => kin[k] || 0),
+            name: COUNTRY_NAMES[code],
+            type: 'bar',
+            marker: { color: COLORS[code], opacity: 0.85 }
+        });
+    }
+
+    Plotly.react('chartComposition', traces, {
+        ...baseLayout(320), barmode: 'group',
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
 }
 
-function updateProductChart() {
-    const fd = filterData();
-    const values = products.map(p => fd.filter(d => d.product === p).reduce((s, d) => s + d.revenue, 0));
-    Plotly.react('productChart', [{
-        x: products, y: values, type: 'bar',
-        marker: { color: ['#818cf8','#34d399','#f59e0b','#f87171','#a78bfa'], borderRadius: 4 }
-    }], { ...plotLayout, height: 300 }, plotConfig);
+function updateChange() {
+    const fa = document.getElementById('focalAge').value;
+    const kinTypes = ['d','gd','ggd','m','gm','ggm','s','a','n','c'];
+
+    const kin1950 = getKinByType('GTM', '1950-1955', fa);
+    const kin2095 = getKinByType('GTM', '2095-2100', fa);
+
+    const labels = kinTypes.map(k => KIN_LABELS[k]);
+    const v1950 = kinTypes.map(k => kin1950[k] || 0);
+    const v2095 = kinTypes.map(k => kin2095[k] || 0);
+
+    Plotly.react('chartChange', [
+        { x: labels, y: v1950, name: '1950', type: 'bar', marker: { color: '#5A7192' } },
+        { x: labels, y: v2095, name: '2095 (proy.)', type: 'bar', marker: { color: '#D94F30' } }
+    ], { ...baseLayout(320), barmode: 'group',
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
 }
 
-function updateGrowthChart() {
-    const fd = filterData();
-    const monthly = months.map((m, i) => fd.filter(d => d.monthIdx === i).reduce((s, d) => s + d.revenue, 0));
-    const growth = monthly.map((v, i) => i === 0 ? 0 : ((v - monthly[i - 1]) / monthly[i - 1] * 100));
-    const colors = growth.map(g => g >= 0 ? '#34d399' : '#f87171');
-    Plotly.react('growthChart', [{
-        x: months, y: growth.map(g => +g.toFixed(1)), type: 'bar',
-        marker: { color: colors }
-    }], { ...plotLayout, height: 300 }, plotConfig);
+function updateProfile() {
+    const yr = document.getElementById('yearSelect').value;
+    document.getElementById('profileSubtitle').textContent = `Periodo: ${yr}`;
+    const ages = DB.ages.filter(a => a !== '100-104');
+    const traces = [];
+
+    for (const code of activeCountries) {
+        traces.push({
+            x: ages, y: ages.map(a => getTotalKin(code, yr, a)),
+            name: COUNTRY_NAMES[code],
+            line: { color: COLORS[code], width: 2.5 },
+            mode: 'lines+markers', marker: { size: 4 }
+        });
+    }
+
+    Plotly.react('chartProfile', traces, {
+        ...baseLayout(320),
+        xaxis: { ...baseLayout().xaxis, title: { text: 'Edad de referencia (Focal)', font: { size: 11 } } },
+        yaxis: { ...baseLayout().yaxis, title: { text: 'Total parientes vivos', font: { size: 11 } } }
+    }, plotConfig);
 }
 
-function updateRepsChart() {
-    const sorted = [...repData].sort((a, b) => a.closed - b.closed);
-    Plotly.react('repsChart', [
-        { y: sorted.map(r => r.name), x: sorted.map(r => r.quota), name: 'Quota', type: 'bar', orientation: 'h', marker: { color: '#334155' } },
-        { y: sorted.map(r => r.name), x: sorted.map(r => r.closed), name: 'Closed', type: 'bar', orientation: 'h', marker: { color: sorted.map(r => r.closed >= r.quota ? '#34d399' : '#f59e0b') } }
-    ], { ...plotLayout, height: 300, barmode: 'overlay', xaxis: { ...plotLayout.xaxis, title: 'Revenue ($K)' } }, plotConfig);
+function updateKinTrends() {
+    const fa = document.getElementById('focalAge').value;
+    const years = getYears();
+    const x = years.map(yearMid);
+
+    function makeTraces(kinTypes, chartId) {
+        const traces = [];
+        for (const k of kinTypes) {
+            const y = years.map(yr => {
+                const kin = getKinByType('GTM', yr, fa);
+                return kin[k] || 0;
+            });
+            traces.push({
+                x, y, name: KIN_LABELS[k],
+                line: { color: KIN_COLORS[k], width: 2 },
+                mode: 'lines', fill: 'tonexty'
+            });
+        }
+        Plotly.react(chartId, traces, {
+            ...baseLayout(280),
+            yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+        }, plotConfig);
+    }
+
+    // Ascending (stacked area)
+    const ascKins = ['m','gm','ggm'];
+    const ascTraces = [];
+    for (const k of ascKins) {
+        ascTraces.push({
+            x, y: years.map(yr => (getKinByType('GTM', yr, fa)[k] || 0)),
+            name: KIN_LABELS[k], line: { color: KIN_COLORS[k], width: 0 },
+            mode: 'lines', stackgroup: 'asc', fillcolor: KIN_COLORS[k] + '80'
+        });
+    }
+    Plotly.react('chartAscending', ascTraces, {
+        ...baseLayout(280),
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
+
+    // Descending
+    const descKins = ['d','gd','ggd'];
+    const descTraces = [];
+    for (const k of descKins) {
+        descTraces.push({
+            x, y: years.map(yr => (getKinByType('GTM', yr, fa)[k] || 0)),
+            name: KIN_LABELS[k], line: { color: KIN_COLORS[k], width: 0 },
+            mode: 'lines', stackgroup: 'desc', fillcolor: KIN_COLORS[k] + '80'
+        });
+    }
+    Plotly.react('chartDescending', descTraces, {
+        ...baseLayout(280),
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
+
+    // Sisters
+    const sisTraces = [];
+    for (const code of activeCountries) {
+        sisTraces.push({
+            x, y: years.map(yr => (getKinByType(code, yr, fa)['s'] || 0)),
+            name: COUNTRY_NAMES[code], line: { color: COLORS[code], width: 2.5 }, mode: 'lines'
+        });
+    }
+    Plotly.react('chartSisters', sisTraces, {
+        ...baseLayout(280),
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
+
+    // Extended lateral
+    const extKins = ['a','n','c'];
+    const extTraces = [];
+    for (const k of extKins) {
+        extTraces.push({
+            x, y: years.map(yr => (getKinByType('GTM', yr, fa)[k] || 0)),
+            name: KIN_LABELS[k], line: { color: KIN_COLORS[k], width: 2.5 }, mode: 'lines'
+        });
+    }
+    Plotly.react('chartExtended', extTraces, {
+        ...baseLayout(280),
+        yaxis: { ...baseLayout().yaxis, title: { text: 'N esperado', font: { size: 11 } } }
+    }, plotConfig);
+
+    // Policy insight
+    const kinNow = getKinByType('GTM', '2020-2025', fa);
+    const kinFut = getKinByType('GTM', '2095-2100', fa);
+    const gmNow = (kinNow.gm || 0);
+    const gmFut = (kinFut.gm || 0);
+    const cNow = (kinNow.c || 0);
+    const cFut = (kinFut.c || 0);
+    const dNow = (kinNow.d || 0);
+    const dFut = (kinFut.d || 0);
+
+    document.getElementById('insightPolicy').innerHTML = `
+        <strong>Implicaciones para pol&iacute;tica p&uacute;blica:</strong>
+        Para una mujer guatemalteca de ${fa} a&ntilde;os, se proyecta que el n&uacute;mero de
+        <strong>primas</strong> pasar&aacute; de ${cNow.toFixed(1)} (2020) a ${cFut.toFixed(1)} (2095),
+        mientras que las <strong>abuelas vivas</strong> pasar&aacute;n de ${gmNow.toFixed(2)} a ${gmFut.toFixed(2)}.
+        Las <strong>hijas</strong> esperadas cambiar&aacute;n de ${dNow.toFixed(1)} a ${dFut.toFixed(1)}.
+        La reducci&oacute;n de la red familiar colateral (primas, sobrinas, t&iacute;as) es la m&aacute;s pronunciada,
+        lo cual significa que habr&aacute; menos opciones de apoyo fuera del hogar inmediato.
+        Guatemala necesita fortalecer sus sistemas de protecci&oacute;n social para compensar esta transici&oacute;n.
+    `;
 }
 
 function updateAll() {
+    updateHeroStats();
     updateKPIs();
-    updateRevenueChart();
-    updateRegionChart();
-    updateProductChart();
-    updateGrowthChart();
-    updateRepsChart();
+    updateTimeline();
+    updateComposition();
+    updateChange();
+    updateProfile();
+    updateKinTrends();
 }
 
-document.getElementById('regionFilter').addEventListener('change', e => {
-    currentRegion = e.target.value;
-    updateAll();
+// ─── Event Listeners ────────────────────────────────────────
+document.querySelectorAll('.country-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const code = btn.dataset.code;
+        if (code === 'GTM') return; // Always keep Guatemala
+        btn.classList.toggle('active');
+        if (activeCountries.has(code)) activeCountries.delete(code);
+        else activeCountries.add(code);
+        updateAll();
+    });
 });
 
-function setTimeframe(tf) {
-    currentTimeframe = tf;
-    document.getElementById('btnMonthly').classList.toggle('active', tf === 'monthly');
-    document.getElementById('btnQuarterly').classList.toggle('active', tf === 'quarterly');
-    updateAll();
-}
+document.getElementById('focalAge').addEventListener('change', updateAll);
+document.getElementById('yearSelect').addEventListener('change', () => {
+    updateKPIs();
+    updateComposition();
+    updateProfile();
+});
 
-updateAll();
+// ─── Init ───────────────────────────────────────────────────
+fetch('data.json')
+    .then(r => r.json())
+    .then(data => {
+        DB = data;
+        // Populate year select
+        const sel = document.getElementById('yearSelect');
+        data.years.forEach(yr => {
+            const opt = document.createElement('option');
+            opt.value = yr;
+            opt.textContent = yr;
+            if (yr === '2020-2025') opt.selected = true;
+            sel.appendChild(opt);
+        });
+        updateAll();
+    });
 </script>
 </body>
 </html>
