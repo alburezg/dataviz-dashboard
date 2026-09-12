@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>El Futuro de las Redes Familiares en Guatemala</title>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script>if(typeof Plotly==='undefined')document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"><\/script>')</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -857,21 +858,33 @@ document.getElementById('yearSelect').addEventListener('change', () => {
 });
 
 // ─── Init ───────────────────────────────────────────────────
-fetch('data.json')
-    .then(r => r.json())
-    .then(data => {
-        DB = data;
-        // Populate year select
-        const sel = document.getElementById('yearSelect');
-        data.years.forEach(yr => {
-            const opt = document.createElement('option');
-            opt.value = yr;
-            opt.textContent = yr;
-            if (yr === '2020-2025') opt.selected = true;
-            sel.appendChild(opt);
-        });
-        updateAll();
-    });
+function showError(msg) {
+    document.getElementById('chartTimeline').innerHTML =
+        '<div style="color:#f87171;padding:2rem;text-align:center;font-size:1rem;">' + msg + '</div>';
+}
+
+if (typeof Plotly === 'undefined') {
+    showError('Error: No se pudo cargar la biblioteca de graficos (Plotly). Verifica tu conexion o desactiva el bloqueador de scripts.');
+} else {
+    fetch('data.json?v=2')
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
+        .then(data => {
+            DB = data;
+            const sel = document.getElementById('yearSelect');
+            data.years.forEach(yr => {
+                const opt = document.createElement('option');
+                opt.value = yr;
+                opt.textContent = yr;
+                if (yr === '2020-2025') opt.selected = true;
+                sel.appendChild(opt);
+            });
+            try { updateAll(); } catch(e) { showError('Error al renderizar: ' + e.message); console.error(e); }
+        })
+        .catch(err => showError('Error al cargar datos: ' + err.message));
+}
 </script>
 </body>
 </html>
